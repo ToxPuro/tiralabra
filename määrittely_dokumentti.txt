@@ -1,0 +1,12 @@
+Suoritan projektin käyttäen Python-kieltä ja numeerisen laskennan kirjasto numpy
+Hallitsen pääasiallisesti Pythonia, mutta Javascriptiä ja Javaa käyttäviä projekteja pystyn arvioimaan
+Toteutan työssäni vastavirta-algoritmin, jonka avulla neuroverkot pystyvät toteuttamaan virheiden korjaamisen vaativat derivaattalaskut
+Myös erilaisia oppimisalgoritmeja, kuten Adam, jotka kaikki perustuvat stokastiseen gradienttilaskuun
+Myös konvoluutioiden laskeminen voidaan pitää algoritmina
+Rakennan myös neuroverkon itse, joka vaatii neuroverkon tasojen ja solmujen rakentamista. Tämä kuitenkin rakentuu kokonaan Numpy-matriisien varaan
+Ratkaistava ongelma on käsinkirjoitettujen numeroiden tunnistaminen ja valitsin neuroverkon, koska se on alan paras ratkaisu ongelmaan
+Ohjelma saa syötteenä MNIST-datasta olevia 28x28 numeroiden kuvia
+Olen TKT-opiskelija ja toteutan projektin suomeksi
+
+Lähteet:
+https://www.deeplearningbook.org/
