@@ -1,12 +1,12 @@
-Suoritan projektin käyttäen Python-kieltä ja numeerisen laskennan kirjasto numpy
-Hallitsen pääasiallisesti Pythonia, mutta Javascriptiä ja Javaa käyttäviä projekteja pystyn arvioimaan
-Toteutan työssäni vastavirta-algoritmin, jonka avulla neuroverkot pystyvät toteuttamaan virheiden korjaamisen vaativat derivaattalaskut
-Myös erilaisia oppimisalgoritmeja, kuten Adam, jotka kaikki perustuvat stokastiseen gradienttilaskuun
-Myös konvoluutioiden laskeminen voidaan pitää algoritmina
-Rakennan myös neuroverkon itse, joka vaatii neuroverkon tasojen ja solmujen rakentamista. Tämä kuitenkin rakentuu kokonaan Numpy-matriisien varaan
-Ratkaistava ongelma on käsinkirjoitettujen numeroiden tunnistaminen ja valitsin neuroverkon, koska se on alan paras ratkaisu ongelmaan
-Ohjelma saa syötteenä MNIST-datasta olevia 28x28 numeroiden kuvia
-Olen TKT-opiskelija ja toteutan projektin suomeksi
+I will do the project using Python and it's library Numpy
+I mainly are fluent in Python and Javascript, but can understand Java code fairly well
+In my project I will build a backpropagation algorithm that helps neural nets learn their mistakes by derivate calculus
+I will also implement different learning algorithms like Adam, which all are modifications of stocasthic gradient descent
+Also one could regard convolutions as their own algorithm
+I will build the neural net by myself, which will mainly just use Numpy-matrices so no need for separate data structures
+The problem at hand is classifying hand-written digits. I choice neural nets, and CNN-architechture, because it's the best solution around
+The program will get hand-written digits from MNIST dataset as input
+I am a TKT-student and will do this project in english
 
-Lähteet:
+References:
 https://www.deeplearningbook.org/

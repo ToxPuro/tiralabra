@@ -1,4 +1,4 @@
-Aika käytetty: 1-1,5h
+Time used: 1-1,5h
 
-Päätin projektin aiheen, kirjastot joita käytän ja pistin projektin pystyyn
-Ensi viikolla alkaa projektin oikea koodaaminen
+I decided the project topic, choice libraries I will use, put up the project
+Next week the actual coding will start
