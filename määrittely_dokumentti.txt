@@ -7,6 +7,7 @@ I will build the neural net by myself, which will mainly just use Numpy-matrices
 The problem at hand is classifying hand-written digits. I choice neural nets, and CNN-architechture, because it's the best solution around
 The program will get hand-written digits from MNIST dataset as input
 I am a TKT-student and will do this project in english
+Only time complexity goals are that the neural net isn't so slow that is unpractical
 
 References:
 https://www.deeplearningbook.org/
