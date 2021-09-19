@@ -131,3 +131,54 @@ def test_softmax_loss():
     loss, dx = softmax_loss(x, y)
     assert rel_error(loss, 2.3) < 10**-3
     assert rel_error(dx_num, dx) < 10**-8
+
+def test_batchnorm_forward():
+    np.random.seed(231)
+    N, D1, D2, D3 = 200, 50, 60, 3
+    X = np.random.randn(N, D1)
+    W1 = np.random.randn(D1, D2)
+    W2 = np.random.randn(D2, D3)
+    a = np.maximum(0, X.dot(W1)).dot(W2)
+
+    gamma = np.ones((D3,))
+    beta = np.zeros((D3,))
+
+    # Means should be close to zero and stds close to one.
+    print('After batch normalization (gamma=1, beta=0)')
+    a_norm, _ = batchnorm_forward(a, gamma, beta, {'mode': 'train'})
+    assert rel_error(a_norm.mean(axis=0),np.zeros((D3,)))<10**-8
+    assert rel_error(a_norm.std(axis=0),np.ones((D3,)))<10**-8
+
+    gamma = np.asarray([1.0, 2.0, 3.0])
+    beta = np.asarray([11.0, 12.0, 13.0])
+
+    # Now means should be close to beta and stds close to gamma.
+    print('After batch normalization (gamma=', gamma, ', beta=', beta, ')')
+    a_norm, _ = batchnorm_forward(a, gamma, beta, {'mode': 'train'})
+    assert rel_error(a_norm.mean(axis=0),[11.0,12.0,13.0])<10**-8
+    assert rel_error(a_norm.std(axis=0),[1.0,2.0,3.0])<10**-8
+
+def test_batchnorm_backward():
+  np.random.seed(231)
+  N, D = 4, 5
+  x = 5 * np.random.randn(N, D) + 12
+  gamma = np.random.randn(D)
+  beta = np.random.randn(D)
+  dout = np.random.randn(N, D)
+
+  bn_param = {'mode': 'train'}
+  fx = lambda x: batchnorm_forward(x, gamma, beta, bn_param)[0]
+  fg = lambda a: batchnorm_forward(x, a, beta, bn_param)[0]
+  fb = lambda b: batchnorm_forward(x, gamma, b, bn_param)[0]
+
+  dx_num = eval_numerical_gradient_array(fx, x, dout)
+  da_num = eval_numerical_gradient_array(fg, gamma.copy(), dout)
+  db_num = eval_numerical_gradient_array(fb, beta.copy(), dout)
+
+  _, cache = batchnorm_forward(x, gamma, beta, bn_param)
+  dx, dgamma, dbeta = batchnorm_backward(dout, cache)
+
+  # You should expect to see relative errors between 1e-13 and 1e-8.
+  assert rel_error(dx_num, dx)<10**-8
+  assert rel_error(da_num, dgamma)<10**-8
+  assert rel_error(db_num, dbeta)<10**-8

@@ -164,5 +164,34 @@ def batchnorm_forward(x, gamma, beta, bn_param):
 
     return out, cache
 
+def batchnorm_backward(dout, cache):
+    """Backward pass for batch normalization.
+    Reference: (https://arxiv.org/abs/1502.03167)
+
+    -dout: upstream gradient
+    -cache: cached values form batchnorm_forward
+
+    -dx: gradient in respect to x
+    -dgamma: gradient in respect to gamma
+    -dbeta: gradient in respect to beta
+    """
+    
+    dx, dgamma, dbeta = None, None, None
+
+    x,sample_mean,sample_std,gamma,beta,z,sample_var = cache
+
+    dbeta = dout.sum(axis=0)
+    dgamma = np.sum(dout * z, axis=0)
+
+    
+
+    N = dout.shape[0]
+    dfdz = dout * gamma                                             
+    dfdz_sum = np.sum(dfdz,axis=0)                                  
+    dx = dfdz - dfdz_sum/N - np.sum(dfdz * z,axis=0) * z/N          
+    dx /= sample_std
+
+    return dx, dgamma, dbeta
+
 
 
