@@ -1,4 +1,8 @@
+""""Implementations of different update rules for neural"""
+
 import numpy as np
+
+
 
 
 def sgd(w, dw, config=None):

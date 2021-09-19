@@ -1,19 +1,20 @@
+"""Tests for layers.py"""
+
 import numpy as np
 from layers import *
-from helpers import *
+from helpers import rel_error
 
 def eval_numerical_gradient(f, x, verbose=True, h=0.00001):
     """
     checks numerical gradient by comparing it to f(x+h) - f(x-h) / 2h
     """
-
-    fx = f(x)  # evaluate function value at original point
+  
     grad = np.zeros_like(x)
     # iterate over all indexes in x
     it = np.nditer(x, flags=["multi_index"], op_flags=["readwrite"])
     while not it.finished:
 
-        # evaluate function at x+h
+        # evaluate function at x+h and x-h
         ix = it.multi_index
         oldval = x[ix]
         x[ix] = oldval + h  # increment by h
@@ -51,12 +52,11 @@ def eval_numerical_gradient_array(f, x, df, h=1e-5):
     return grad
 
 
-def rel_error(x, y):
-  """ returns relative error """
-  return np.max(np.abs(x - y) / (np.maximum(1e-8, np.abs(x) + np.abs(y))))
+
 
 
 def test_affine_forward():
+    """Tests affine_forward against simulated values"""
     num_inputs = 2
     input_shape = (4, 5, 6)
     output_dim = 3
@@ -72,12 +72,13 @@ def test_affine_forward():
     correct_out = np.array([[ 1.49834967,  1.70660132,  1.91485297],
                             [ 3.25553199,  3.5141327,   3.77273342]])
 
-    assert(rel_error(out, correct_out)<10**-9)
+    assert rel_error(out, correct_out)<10**-9
 
-    
+
 
 
 def test_affine_backward():
+    """Tests affine_backward with gradient checking"""
     np.random.seed(231)
     x = np.random.randn(10, 2, 3)
     w = np.random.randn(6, 5)
@@ -98,6 +99,7 @@ def test_affine_backward():
     assert rel_error(db_num, db) < 10**-10
 
 def test_relu_forward():
+    """Tests relu against simulated values"""
     x = np.linspace(-0.5, 0.5, num=12).reshape(3, 4)
 
     out, _ = relu_forward(x)
@@ -109,6 +111,7 @@ def test_relu_forward():
     assert rel_error(out, correct_out) < 5**-8
 
 def test_relu_backward():
+    """Tests relu backward with gradient checking"""
     np.random.seed(231)
     x = np.random.randn(10, 10)
     dout = np.random.randn(*x.shape)
@@ -122,6 +125,8 @@ def test_relu_backward():
     assert rel_error(dx_num, dx) < 4*10**-12
 
 def test_softmax_loss():
+    """tests softmax loss against simulated values
+    and gradient checking"""
     np.random.seed(231)
     num_classes, num_inputs = 10, 50
     x = 0.001 * np.random.randn(num_inputs, num_classes)
@@ -134,6 +139,7 @@ def test_softmax_loss():
     assert rel_error(dx_num, dx) < 10**-8
 
 def test_batchnorm_forward():
+    """Tests batchnorm backward with gradient checking"""
     np.random.seed(231)
     N, D1, D2, D3 = 200, 50, 60, 3
     X = np.random.randn(N, D1)
@@ -160,26 +166,27 @@ def test_batchnorm_forward():
     assert rel_error(a_norm.std(axis=0),[1.0,2.0,3.0])<10**-8
 
 def test_batchnorm_backward():
-  np.random.seed(231)
-  N, D = 4, 5
-  x = 5 * np.random.randn(N, D) + 12
-  gamma = np.random.randn(D)
-  beta = np.random.randn(D)
-  dout = np.random.randn(N, D)
+    """Tests batchnorm with gradient checking"""
+    np.random.seed(231)
+    N, D = 4, 5
+    x = 5 * np.random.randn(N, D) + 12
+    gamma = np.random.randn(D)
+    beta = np.random.randn(D)
+    dout = np.random.randn(N, D)
 
-  bn_param = {'mode': 'train'}
-  fx = lambda x: batchnorm_forward(x, gamma, beta, bn_param)[0]
-  fg = lambda a: batchnorm_forward(x, a, beta, bn_param)[0]
-  fb = lambda b: batchnorm_forward(x, gamma, b, bn_param)[0]
+    bn_param = {'mode': 'train'}
+    fx = lambda x: batchnorm_forward(x, gamma, beta, bn_param)[0]
+    fg = lambda a: batchnorm_forward(x, a, beta, bn_param)[0]
+    fb = lambda b: batchnorm_forward(x, gamma, b, bn_param)[0]
 
-  dx_num = eval_numerical_gradient_array(fx, x, dout)
-  da_num = eval_numerical_gradient_array(fg, gamma.copy(), dout)
-  db_num = eval_numerical_gradient_array(fb, beta.copy(), dout)
+    dx_num = eval_numerical_gradient_array(fx, x, dout)
+    da_num = eval_numerical_gradient_array(fg, gamma.copy(), dout)
+    db_num = eval_numerical_gradient_array(fb, beta.copy(), dout)
 
-  _, cache = batchnorm_forward(x, gamma, beta, bn_param)
-  dx, dgamma, dbeta = batchnorm_backward(dout, cache)
+    _, cache = batchnorm_forward(x, gamma, beta, bn_param)
+    dx, dgamma, dbeta = batchnorm_backward(dout, cache)
 
-  # You should expect to see relative errors between 1e-13 and 1e-8.
-  assert rel_error(dx_num, dx)<10**-8
-  assert rel_error(da_num, dgamma)<10**-8
-  assert rel_error(db_num, dbeta)<10**-8
+    # You should expect to see relative errors between 1e-13 and 1e-8.
+    assert rel_error(dx_num, dx)<10**-8
+    assert rel_error(da_num, dgamma)<10**-8
+    assert rel_error(db_num, dbeta)<10**-8

@@ -1,5 +1,7 @@
+"""Different kinds of layers for the neural net"""
+
 import numpy as np
-from helpers import *
+from helpers import reshape
 
 
 def affine_forward(x, w, b):
@@ -19,13 +21,12 @@ def affine_forward(x, w, b):
     out = np.dot(x_reshape, w) + b
 
     ##cache values
-    cache = (x, w, b)
+    cache = (x, w)
     return out, cache
 
 
 def affine_backward(dout, cache):
     """Computes the backward pass for an affine layer.
-    
     - dout: Upstream derivatives
     - cache: cache from affine_forward
 
@@ -34,7 +35,7 @@ def affine_backward(dout, cache):
     - db: Gradient with respect to b
     """
     ## values from affine_forward cache
-    x, w, b = cache
+    x, w = cache
 
     ##manipulate into correct shape
     x_reshape = reshape(x)
@@ -69,7 +70,6 @@ def relu_backward(dout, cache):
     - dout: Upstream derivatives
     - cache: cache from relu_forward
     - dx: Gradient with respect to x
-    
     """
 
     ## values from relu_forward
@@ -114,7 +114,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
 
     idea of batchnorm is to keep the earlier layers distribution more stable while the weights are changing
     to do this we normalize the data. Also we include gamma and beta that the neural net can if it wants to forget the normalization if that is better
-    (https://arxiv.org/abs/1502.03167) 
+    (https://arxiv.org/abs/1502.03167)
 
     - x: input data
     - gamma: Scale parameter
@@ -133,7 +133,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     eps = bn_param.get("eps", 1e-5)
     momentum = bn_param.get("momentum", 0.9)
 
-    N, D = x.shape
+    _, D = x.shape
     running_mean = bn_param.get("running_mean", np.zeros(D, dtype=x.dtype))
     running_var = bn_param.get("running_var", np.zeros(D, dtype=x.dtype))
 
@@ -150,7 +150,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
 
         z = (x - sample_mean)/sample_std
         out = z*gamma + beta
-        cache = (x,sample_mean,sample_std,gamma,beta,z,sample_var)
+        cache = (sample_std,gamma,z)
 
     elif mode == "test":
         ## during testing use the calculated running mean and variance to normalize
@@ -175,10 +175,8 @@ def batchnorm_backward(dout, cache):
     -dgamma: gradient in respect to gamma
     -dbeta: gradient in respect to beta
     """
-    
-    dx, dgamma, dbeta = None, None, None
 
-    x,sample_mean,sample_std,gamma,beta,z,sample_var = cache
+    sample_std,gamma,z = cache
 
     dbeta = dout.sum(axis=0)
     dgamma = np.sum(dout * z, axis=0)
