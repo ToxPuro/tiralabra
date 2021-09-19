@@ -1,5 +1,6 @@
 import numpy as np
 from layers import *
+from helpers import *
 
 def eval_numerical_gradient(f, x, verbose=True, h=0.00001):
     """
