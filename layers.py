@@ -86,7 +86,6 @@ def relu_backward(dout, cache):
 def softmax_loss(x, y):
     """Computes the loss and gradient for softmax.
 
-    Inputs:
     - x: Input data
     - y: labels for input
     - loss: value of the loss softmax loss function
@@ -109,6 +108,61 @@ def softmax_loss(x, y):
     dx /= N
 
     return loss, dx
+
+def batchnorm_forward(x, gamma, beta, bn_param):
+    """Forward pass for batch normalization.
+
+    idea of batchnorm is to keep the earlier layers distribution more stable while the weights are changing
+    to do this we normalize the data. Also we include gamma and beta that the neural net can if it wants to forget the normalization if that is better
+    (https://arxiv.org/abs/1502.03167) 
+
+    - x: input data
+    - gamma: Scale parameter
+    - beta: Shift paremeter
+    - bn_param: Dictionary with the following keys:
+      - mode: 'train' or 'test' in order to know how to act
+      - eps: Constant for numeric stability
+      - momentum: Constant for running mean / variance.
+      - running_mean: running_mean used after training
+      - running_var: running_var used after training
+
+    - out: normalized output
+    - cache: cache values for backprop
+    """
+    mode = bn_param["mode"]
+    eps = bn_param.get("eps", 1e-5)
+    momentum = bn_param.get("momentum", 0.9)
+
+    N, D = x.shape
+    running_mean = bn_param.get("running_mean", np.zeros(D, dtype=x.dtype))
+    running_var = bn_param.get("running_var", np.zeros(D, dtype=x.dtype))
+
+    out, cache = None, None
+    
+    if mode == "train":
+        ## during training do normal normalization
+        sample_mean = x.mean(axis=0)
+        sample_var = x.var(axis=0) + eps
+        sample_std = np.sqrt(sample_var)
+
+        running_mean = momentum * running_mean + (1 - momentum) * sample_mean
+        running_var = momentum * running_var + (1 - momentum) * sample_var
+
+        z = (x - sample_mean)/sample_std
+        out = z*gamma + beta
+        cache = (x,sample_mean,sample_std,gamma,beta,z,sample_var)
+
+    elif mode == "test":
+        ## during testing use the calculated running mean and variance to normalize
+        z = (x - running_mean)/np.sqrt(running_var+eps)
+        out = z*gamma + beta
+
+
+    # Store the updated running means back into bn_param
+    bn_param["running_mean"] = running_mean
+    bn_param["running_var"] = running_var
+
+    return out, cache
 
 
 
