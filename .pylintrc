@@ -509,7 +509,7 @@ single-line-class-stmt=no
 # else.
 single-line-if-stmt=no
 
-good-names=x,w,b,z,dw,dx,db,dz,y,a,N,C,HH,H,WW,W,WF,HF,D,fx,fg,fb,X,W1,W2,D3,D2,D1,ix,it,h,df,f
+good-names=x,w,b,z,dw,dx,db,dz,y,a,N,C,HH,H,WW,W,WF,HF,D,fx,fg,fb,X,W1,W2,D3,D2,D1,ix,it,h,df,f,v,m,t,mt,vt
 
 
 [DESIGN]
