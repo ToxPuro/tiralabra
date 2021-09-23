@@ -2,54 +2,9 @@
 
 import numpy as np
 from layers import *
-from helpers import rel_error
+from helpers import rel_error, eval_numerical_gradient, eval_numerical_gradient_array
 
-def eval_numerical_gradient(f, x, verbose=True, h=0.00001):
-    """
-    checks numerical gradient by comparing it to f(x+h) - f(x-h) / 2h
-    """
-  
-    grad = np.zeros_like(x)
-    # iterate over all indexes in x
-    it = np.nditer(x, flags=["multi_index"], op_flags=["readwrite"])
-    while not it.finished:
 
-        # evaluate function at x+h and x-h
-        ix = it.multi_index
-        oldval = x[ix]
-        x[ix] = oldval + h  # increment by h
-        fxph = f(x)  # evalute f(x + h)
-        x[ix] = oldval - h
-        fxmh = f(x)  # evaluate f(x - h)
-        x[ix] = oldval  # restore
-
-        # compute the partial derivative with centered formula
-        grad[ix] = (fxph - fxmh) / (2 * h)  # the slope
-        if verbose:
-            print(ix, grad[ix])
-        it.iternext()  # step to next dimension
-
-    return grad
-
-def eval_numerical_gradient_array(f, x, df, h=1e-5):
-    """
-    same as eval_numerical_gradient but now for arrays
-    """
-    grad = np.zeros_like(x)
-    it = np.nditer(x, flags=["multi_index"], op_flags=["readwrite"])
-    while not it.finished:
-        ix = it.multi_index
-
-        oldval = x[ix]
-        x[ix] = oldval + h
-        pos = f(x).copy()
-        x[ix] = oldval - h
-        neg = f(x).copy()
-        x[ix] = oldval
-
-        grad[ix] = np.sum((pos - neg) * df) / (2 * h)
-        it.iternext()
-    return grad
 
 
 
@@ -92,8 +47,6 @@ def test_affine_backward():
     _, cache = affine_forward(x, w, b)
     dx, dw, db = affine_backward(dout, cache)
 
-    # The error should be around e-10 or less
-    print('Testing affine_backward function:')
     assert rel_error(dx_num, dx) < 10**-10
     assert rel_error(dw_num, dw) < 10**-10
     assert rel_error(db_num, db) < 10**-10
@@ -186,12 +139,12 @@ def test_batchnorm_backward():
     _, cache = batchnorm_forward(x, gamma, beta, bn_param)
     dx, dgamma, dbeta = batchnorm_backward(dout, cache)
 
-    # You should expect to see relative errors between 1e-13 and 1e-8.
     assert rel_error(dx_num, dx)<10**-8
     assert rel_error(da_num, dgamma)<10**-8
     assert rel_error(db_num, dbeta)<10**-8
 
 def test_conv_forward():
+    """Test conv layer againts simulated values"""
     x_shape = (2, 3, 4, 4)
     w_shape = (3, 3, 4, 4)
     x = np.linspace(-0.1, 0.5, num=np.prod(x_shape)).reshape(x_shape)
@@ -212,7 +165,26 @@ def test_conv_forward():
                                 [ 0.59480972,  0.56776003]],
                                 [[ 2.36270298,  2.36904306],
                                 [ 2.38090835,  2.38247847]]]])
-
-    # Compare your output to ours; difference should be around e-8
-    print('Testing conv_forward_naive')
     assert rel_error(out, correct_out)<10**-7
+
+def test_conv_backward():
+    """Test conv backward with gradient checking"""
+    np.random.seed(231)
+    x = np.random.randn(4, 3, 5, 5)
+    w = np.random.randn(2, 3, 3, 3)
+    b = np.random.randn(2,)
+    dout = np.random.randn(4, 2, 5, 5)
+    conv_param = {'stride': 1, 'pad': 1}
+
+    dx_num = eval_numerical_gradient_array(lambda x: conv_forward(x, w, b, conv_param)[0], x, dout)
+    dw_num = eval_numerical_gradient_array(lambda w: conv_forward(x, w, b, conv_param)[0], w, dout)
+    db_num = eval_numerical_gradient_array(lambda b: conv_forward(x, w, b, conv_param)[0], b, dout)
+
+    out, cache = conv_forward(x, w, b, conv_param)
+    dx, dw, db = conv_backward(dout, cache)
+
+    # Your errors should be around e-8 or less.
+    print('Testing conv_backward_naive function')
+    assert rel_error(dx, dx_num)<10**-7
+    assert  rel_error(dw, dw_num)<10**-7
+    assert rel_error(db, db_num)<10**-7

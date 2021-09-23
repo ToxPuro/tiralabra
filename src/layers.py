@@ -1,7 +1,7 @@
 """Different kinds of layers for the neural net"""
 
 import numpy as np
-from helpers import reshape, im2col
+from helpers import reshape, im2col, col2im
 
 
 def affine_forward(x, w, b):
@@ -228,3 +228,41 @@ def conv_forward(x,w,b,conv_param):
     out = np.array(np.hsplit(out, m)).reshape((m, F, n_H, n_W))
     cache = (x, x_col, w_col, w, conv_param)
     return out, cache
+
+def conv_backward(dout, cache):
+    """
+        Distributes error from previous layer to convolutional layer and
+        compute error for the current convolutional layer.
+        Parameters:
+        - dout: error from previous layer.
+            
+        Returns:
+        - dX: error of the current convolutional layer.
+        - self.W['grad']: weights gradient.
+        - self.b['grad']: bias gradient.
+    """
+    
+    x, x_col, w_col, w, conv_param = cache
+
+    stride = conv_param["stride"]
+    pad = conv_param["pad"]
+
+    F, C, HH, WW = w.shape
+
+    m, _, _, _ = x.shape
+    # Compute bias gradient.
+    db = np.sum(dout, axis=(0,2,3))
+    # Reshape dout properly.
+    dout = dout.reshape(dout.shape[0] * dout.shape[1], dout.shape[2] * dout.shape[3])
+    dout = np.array(np.vsplit(dout, m))
+    dout = np.concatenate(dout, axis=-1)
+    # Perform matrix multiplication between reshaped dout and w_col to get dX_col.
+    dx_col = w_col.T @ dout
+    # Perform matrix multiplication between reshaped dout and X_col to get dW_col.
+    dw_col = dout @ x_col.T
+    # Reshape back to image (col2im).
+    dx = col2im(dx_col, x.shape, HH, WW, stride, pad)
+    # Reshape dw_col into dw.
+    dw = dw_col.reshape((F, C, HH, WW))
+                
+    return dx, dw, db
