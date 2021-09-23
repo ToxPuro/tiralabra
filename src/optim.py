@@ -23,7 +23,8 @@ def sgd(w, dw, config=None):
 def sgd_momentum(w, dw, config=None):
     """
     Performs stochastic gradient descent with momentum.
-    With momentum added the neural net will keep on going with momentum so noise in the gradient doesn't
+    With momentum added the neural net will keep
+     on going with momentum so noise in the gradient doesn't
     affect as much and we don't get stuck in local minima
 
     config format:
@@ -50,7 +51,8 @@ def rmsprop(w, dw, config=None):
     """
     Uses the RMSProp update rule, which uses a moving average of squared
     gradient values to set adaptive per-parameter learning rates.
-    read more from here: https://towardsdatascience.com/understanding-rmsprop-faster-neural-network-learning-62e116fcf29a
+    read more from here:
+     https://towardsdatascience.com/understanding-rmsprop-faster-neural-network-learning-62e116fcf29a
 
     config format:
     - learning_rate: Scalar learning rate.
@@ -76,7 +78,8 @@ def adam(w, dw, config=None):
     """
     Uses the Adam update rule, which incorporates moving averages of both the
     gradient and its square and a bias correction term.
-    Read more from here https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/
+    Read more from here 
+    https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/
 
     config format:
     - learning_rate: Scalar learning rate.

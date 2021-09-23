@@ -1,7 +1,7 @@
 """Different kinds of layers for the neural net"""
 
 import numpy as np
-from helpers import reshape
+from helpers import reshape, im2col
 
 
 def affine_forward(x, w, b):
@@ -112,8 +112,10 @@ def softmax_loss(x, y):
 def batchnorm_forward(x, gamma, beta, bn_param):
     """Forward pass for batch normalization.
 
-    idea of batchnorm is to keep the earlier layers distribution more stable while the weights are changing
-    to do this we normalize the data. Also we include gamma and beta that the neural net can if it wants to forget the normalization if that is better
+    idea of batchnorm is to keep the earlier layers distribution
+     more stable while the weights are changing
+    to do this we normalize the data. Also we include
+     gamma and beta that the neural net can if it wants to forget the normalization if that is better
     (https://arxiv.org/abs/1502.03167)
 
     - x: input data
@@ -138,7 +140,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     running_var = bn_param.get("running_var", np.zeros(D, dtype=x.dtype))
 
     out, cache = None, None
-    
+
     if mode == "train":
         ## during training do normal normalization
         sample_mean = x.mean(axis=0)
@@ -181,15 +183,48 @@ def batchnorm_backward(dout, cache):
     dbeta = dout.sum(axis=0)
     dgamma = np.sum(dout * z, axis=0)
 
-    
+
 
     N = dout.shape[0]
-    dfdz = dout * gamma                                             
-    dfdz_sum = np.sum(dfdz,axis=0)                                  
-    dx = dfdz - dfdz_sum/N - np.sum(dfdz * z,axis=0) * z/N          
+    dfdz = dout * gamma                                         
+    dfdz_sum = np.sum(dfdz,axis=0)                               
+    dx = dfdz - dfdz_sum/N - np.sum(dfdz * z,axis=0) * z/N
     dx /= sample_std
 
     return dx, dgamma, dbeta
 
+def conv_forward(x,w,b,conv_param):
+    """
+        Performs a forward convolution.
+
+        Parameters:
+        - X : Last conv layer of shape (m, n_C_prev, n_H_prev, n_W_prev).
+        Returns:
+        - out: previous layer convolved.
+    """
+
+    stride = conv_param["stride"]
+    pad = conv_param["pad"]
+
+    ## get dimensions
+    m, C_prev, n_H_prev, n_W_prev = x.shape
+    F, C, HF, WF = w.shape
 
 
+    ## calculate dimensions after convolutions
+    n_H = int((n_H_prev + 2 * pad - HF)/ stride) + 1
+    n_W = int((n_W_prev + 2 * pad - WF)/ stride) + 1
+
+
+    ## image into matrix
+    x_col = im2col(x, HF, WF, stride, pad)
+
+    ##flatten filters
+    w_col = w.reshape((F, -1))
+    b_col = b.reshape(-1, 1)
+    # Perform matrix multiplication.
+    out = w_col @ x_col + b_col
+    # Reshape back matrix to image.
+    out = np.array(np.hsplit(out, m)).reshape((m, F, n_H, n_W))
+    cache = (x, x_col, w_col, w, conv_param)
+    return out, cache
