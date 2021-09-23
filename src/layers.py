@@ -272,10 +272,10 @@ def max_pool_forward(x, pool_param):
     """
     A fast implementation of the forward pass for a max pooling layer.
 
-    This chooses between the reshape method and the im2col method. If the pooling
+    This chooses between the reshape method and the naive method. If the pooling
     regions are square and tile the input image, then we can use the reshape
-    method which is very fast. Otherwise we fall back on the im2col method, which
-    is not much faster than the naive method.
+    method which is very fast. Otherwise we fall back on the naive method, which
+    is clearly slower.
     """
     N, C, H, W = x.shape
     pool_height, pool_width = pool_param["pool_height"], pool_param["pool_width"]
@@ -287,8 +287,8 @@ def max_pool_forward(x, pool_param):
         out, reshape_cache = max_pool_forward_reshape(x, pool_param)
         cache = ("reshape", reshape_cache)
     else:
-        out, im2col_cache = max_pool_forward_im2col(x, pool_param)
-        cache = ("im2col", im2col_cache)
+        out, naive_cache = max_pool_forward_naive(x, pool_param)
+        cache = ("naive", naive_cache)
     return out, cache
 
 
@@ -299,7 +299,9 @@ def max_pool_backward(dout, cache):
     This switches between the reshape method an the im2col method depending on
     which method was used to generate the cache.
     """
+    
     method, real_cache = cache
+    print(method)
     if method == "reshape":
         return max_pool_backward_reshape(dout, real_cache)
 
@@ -395,41 +397,6 @@ def max_pool_forward_naive(x, pool_param):
                 out[n, :, i, j] = np.amax(x[n, :, i*stride:i*stride+HH, j*stride:j*stride+WW], axis=(-1, -2))
 
     cache = (x, pool_param)
-    return out, cache
-
-def max_pool_forward_im2col(x, pool_param):
-    """
-       Implements max pooling
-       The idea of max pooling is to downsample images
-       inside the neural net in order to not exponentially
-       increase the image sizes. Downsampling
-
-        Parameters:
-        - x: input image
-        - pool_param: includes pool_height, width and stride
-
-        Returns:
-        - pooled image
-    """
-
-    m, n_C_prev, H, W = x.shape
-    n_C = n_C_prev
-    HH = pool_param.get('pool_height', 2)
-    WW = pool_param.get('pool_width', 2)
-    stride = pool_param.get('stride', 2)
-    n_H = int((H-HH)/ stride) + 1
-    n_W = int((W - WW)/ stride) + 1
-
-    ## no padding
-    X_col = im2col(x, HH, WW, stride, 0)
-    X_col = X_col.reshape(n_C, X_col.shape[0]//n_C, -1)
-    max_indexes = np.argmax(X_col, axis=0)
-    out = np.max(X_col, axis=1)
-    # Reshape out properly.
-    out = np.array(np.hsplit(out, m))
-    out = out.reshape(m, n_C, n_H, n_W)
-
-    cache = (x, X_col, pool_param)
     return out, cache
 
 def max_pool_backward_naive(dout, cache):

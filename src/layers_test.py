@@ -186,8 +186,8 @@ def test_conv_backward():
     assert  rel_error(dw, dw_num)<10**-7
     assert rel_error(db, db_num)<10**-7
 
-def test_max_pool_forward():
-    """Test max pooling forward layer against simulated values"""
+def test_max_pool_forward_fast():
+    """Test max pooling forward layer against simulated values when fast method is used"""
     x_shape = (2, 3, 4, 4)
     x = np.linspace(-0.3, 0.4, num=np.prod(x_shape)).reshape(x_shape)
     pool_param = {'pool_width': 2, 'pool_height': 2, 'stride': 2}
@@ -209,11 +209,58 @@ def test_max_pool_forward():
 
     assert rel_error(out, correct_out)<10**-7
 
-def test_max_pool_backward():
+def test_max_pool_backward_fast():
+    """Test maxpool, when using fast method, backward with gradient checking"""
     np.random.seed(231)
     x = np.random.randn(3, 2, 8, 8)
     dout = np.random.randn(3, 2, 4, 4)
     pool_param = {'pool_height': 2, 'pool_width': 2, 'stride': 2}
+
+    dx_num = eval_numerical_gradient_array(lambda x: max_pool_forward(x, pool_param)[0], x, dout)
+
+    out, cache = max_pool_forward(x, pool_param)
+    dx = max_pool_backward(dout, cache)
+
+    # Your error should be on the order of e-12
+    assert rel_error(dx, dx_num)<10**-11
+
+def test_max_pool_forward_naive():
+    """Test max pooling forward layer against simulated values when slow method is used"""
+    x_shape = (2, 3, 5, 5)
+    x = np.linspace(-0.3, 0.4, num=np.prod(x_shape)).reshape(x_shape)
+    pool_param = {'pool_width': 2, 'pool_height': 2, 'stride': 2}
+
+    out, _ = max_pool_forward(x, pool_param)
+    print(out)
+    correct_out = np.array([[[[-0.27181208, -0.26241611],
+                              [-0.22483221, -0.21543624]],
+
+                                [[-0.15436242, -0.14496644],
+                                [-0.10738255, -0.09798658]],
+
+                                [[-0.03691275, -0.02751678],
+                                [ 0.01006711,  0.01946309]]],
+
+
+                                [[[ 0.08053691,  0.08993289],
+                                [ 0.12751678,  0.13691275]],
+
+                                [[ 0.19798658,  0.20738255],
+                                [ 0.24496644,  0.25436242]],
+
+                                [[ 0.31543624,  0.32483221],
+                                [ 0.36241611,  0.37181208]]]]
+                        )
+                                
+
+    assert rel_error(out, correct_out)<2.1*10**-7
+
+def test_max_pool_backward_naive():
+    """Test maxpool, when using slow method, backward with gradient checking"""
+    np.random.seed(231)
+    x = np.random.randn(3, 2, 9, 9)
+    dout = np.random.randn(3, 2, 4, 4)
+    pool_param = {'pool_height':2, 'pool_width': 2, 'stride': 2}
 
     dx_num = eval_numerical_gradient_array(lambda x: max_pool_forward(x, pool_param)[0], x, dout)
 
