@@ -78,7 +78,7 @@ def adam(w, dw, config=None):
     """
     Uses the Adam update rule, which incorporates moving averages of both the
     gradient and its square and a bias correction term.
-    Read more from here 
+    Read more from here
     https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/
 
     config format:

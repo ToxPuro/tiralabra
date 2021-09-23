@@ -109,8 +109,8 @@ def col2im(dX_col, X_shape, HF, WF, stride, pad):
     # Add padding if needed.
     H_padded, W_padded = H + 2 * pad, W + 2 * pad
     X_padded = np.zeros((N, D, H_padded, W_padded))
-    
-    # Index matrices, necessary to transform our input image into a matrix. 
+
+    # Index matrices, necessary to transform our input image into a matrix.
     i, j, d = get_indices(X_shape, HF, WF, stride, pad)
     # Retrieve batch dimension by spliting dX_col N times: (X, Y) => (N, X, Y)
     dX_col_reshaped = np.array(np.hsplit(dX_col, N))
@@ -120,14 +120,14 @@ def col2im(dX_col, X_shape, HF, WF, stride, pad):
     # Remove padding from new image if needed.
     if pad == 0:
         return X_padded
-    elif type(pad) is int:
-        return X_padded[:, :, pad:-pad, pad:-pad]
+
+    return X_padded[:, :, pad:-pad, pad:-pad]
 
 def eval_numerical_gradient(f, x, verbose=True, h=0.00001):
     """
     checks numerical gradient by comparing it to f(x+h) - f(x-h) / 2h
     """
-  
+
     grad = np.zeros_like(x)
     # iterate over all indexes in x
     it = np.nditer(x, flags=["multi_index"], op_flags=["readwrite"])

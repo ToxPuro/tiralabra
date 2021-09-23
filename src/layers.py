@@ -113,9 +113,10 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     """Forward pass for batch normalization.
 
     idea of batchnorm is to keep the earlier layers distribution
-     more stable while the weights are changing
+    more stable while the weights are changing
     to do this we normalize the data. Also we include
-     gamma and beta that the neural net can if it wants to forget the normalization if that is better
+    gamma and beta that the neural net can
+    if it wants to forget the normalization if that is better
     (https://arxiv.org/abs/1502.03167)
 
     - x: input data
@@ -186,8 +187,8 @@ def batchnorm_backward(dout, cache):
 
 
     N = dout.shape[0]
-    dfdz = dout * gamma                                         
-    dfdz_sum = np.sum(dfdz,axis=0)                               
+    dfdz = dout * gamma
+    dfdz_sum = np.sum(dfdz,axis=0)
     dx = dfdz - dfdz_sum/N - np.sum(dfdz * z,axis=0) * z/N
     dx /= sample_std
 
@@ -235,13 +236,13 @@ def conv_backward(dout, cache):
         compute error for the current convolutional layer.
         Parameters:
         - dout: error from previous layer.
-            
+
         Returns:
         - dX: error of the current convolutional layer.
         - self.W['grad']: weights gradient.
         - self.b['grad']: bias gradient.
     """
-    
+
     x, x_col, w_col, w, conv_param = cache
 
     stride = conv_param["stride"]
@@ -264,5 +265,193 @@ def conv_backward(dout, cache):
     dx = col2im(dx_col, x.shape, HH, WW, stride, pad)
     # Reshape dw_col into dw.
     dw = dw_col.reshape((F, C, HH, WW))
-                
+
     return dx, dw, db
+
+def max_pool_forward(x, pool_param):
+    """
+    A fast implementation of the forward pass for a max pooling layer.
+
+    This chooses between the reshape method and the im2col method. If the pooling
+    regions are square and tile the input image, then we can use the reshape
+    method which is very fast. Otherwise we fall back on the im2col method, which
+    is not much faster than the naive method.
+    """
+    N, C, H, W = x.shape
+    pool_height, pool_width = pool_param["pool_height"], pool_param["pool_width"]
+    stride = pool_param["stride"]
+
+    same_size = pool_height == pool_width == stride
+    tiles = H % pool_height == 0 and W % pool_width == 0
+    if same_size and tiles:
+        out, reshape_cache = max_pool_forward_reshape(x, pool_param)
+        cache = ("reshape", reshape_cache)
+    else:
+        out, im2col_cache = max_pool_forward_im2col(x, pool_param)
+        cache = ("im2col", im2col_cache)
+    return out, cache
+
+
+def max_pool_backward(dout, cache):
+    """
+    A fast implementation of the backward pass for a max pooling layer.
+
+    This switches between the reshape method an the im2col method depending on
+    which method was used to generate the cache.
+    """
+    method, real_cache = cache
+    if method == "reshape":
+        return max_pool_backward_reshape(dout, real_cache)
+
+    return max_pool_backward_naive(dout, real_cache)
+
+
+
+def max_pool_forward_reshape(x, pool_param):
+    """
+    Max pooling technique which uses square filters that tile the image
+    Main idea is to fold the image and then take multidimensional max
+    """
+    N, C, H, W = x.shape
+    pool_height, pool_width = pool_param["pool_height"], pool_param["pool_width"]
+    stride = pool_param["stride"]
+    assert pool_height == pool_width == stride, "Invalid pool params"
+    assert H % pool_height == 0
+    assert W % pool_height == 0
+
+    ##This is somewhat tricky so it is somewhat in order to explain the code. At least it was tricky to code
+    ## Thing only to doing max_pooling to a single channel of a single image, so N and C stay the same
+    ## Now we got a 2-dimensional image. The pooling filter will go tile exactly, this is why to have two implementations,
+    ## You can first imagine folding the 2-dimensional image over the height of the filter. So 9x9 image will become 3x9x3 image with a 3x3 filter.
+    ## Now the filter needs to only move horizontally and calculate also with the new dimension
+    ## Now fold this 3x9x3 by the width and you get 3x3x3x3 image which is sadly impossible to visualize :(
+    ## Now the folded image is the same as filter added two new dimensions. When we take the maximum along these dimensions we get the same maximums as sliding the filter :DD
+
+    x_reshaped = x.reshape(
+        N, C, H // pool_height, pool_height, W // pool_width, pool_width
+    )
+    out = x_reshaped.max(axis=3).max(axis=4)
+
+    cache = (x, x_reshaped, out)
+    return out, cache
+
+
+def max_pool_backward_reshape(dout, cache):
+    """
+    Can be only used if used folding technique to in forward
+    Input:
+        -dout: upstream gradient
+        -cached: cached values
+    Returns:
+        -dx: gradient in respect to x
+    """
+    x, x_reshaped, out = cache
+
+    ## make dx and out similar to folded image
+    dx_reshaped = np.zeros_like(x_reshaped)
+    out_newaxis = out[:, :, :, np.newaxis, :, np.newaxis]
+    ##select max pixels
+    mask = x_reshaped == out_newaxis
+    ## make upstream gradient similar to folded image
+    dout_newaxis = dout[:, :, :, np.newaxis, :, np.newaxis]
+    dout_broadcast, _ = np.broadcast_arrays(dout_newaxis, dx_reshaped)
+    ## gradient only for max values
+    dx_reshaped[mask] = dout_broadcast[mask]
+    dx_reshaped /= np.sum(mask, axis=(3, 5), keepdims=True)
+    ##reshape into image shape
+    dx = dx_reshaped.reshape(x.shape)
+
+    return dx
+
+
+
+def max_pool_forward_naive(x, pool_param):
+    """forward pass for a max-pooling layer.
+    in max-pooling-layer the images are downsampled because
+    otherwise after doing convolutions after convolutions the channel depth of our images gets out of hand
+    we only keep the maximum values of convolution areas visualization here:
+    https://towardsdatascience.com/lets-code-convolutional-neural-network-in-plain-numpy-ce48e732f5d5
+
+    - x: Input data
+    - pool_param: tells us how to max pool includes pooling height, wight and stride
+
+    returns downsampled images
+
+    """
+    N, C, H, W = x.shape
+    HH = pool_param.get('pool_height', 2)
+    WW = pool_param.get('pool_width', 2)
+    stride = pool_param.get('stride', 2)
+    Hout = (H - HH) // stride + 1
+    Wout = (W - WW) // stride + 1
+
+
+    out = np.zeros((N, C, Hout, Wout))
+
+
+    for n in range(N): # for each neuron
+        for i in range(Hout): # for each y activation
+            for j in range(Wout): # for each x activation
+                out[n, :, i, j] = np.amax(x[n, :, i*stride:i*stride+HH, j*stride:j*stride+WW], axis=(-1, -2))
+
+    cache = (x, pool_param)
+    return out, cache
+
+def max_pool_forward_im2col(x, pool_param):
+    """
+       Implements max pooling
+       The idea of max pooling is to downsample images
+       inside the neural net in order to not exponentially
+       increase the image sizes. Downsampling
+
+        Parameters:
+        - x: input image
+        - pool_param: includes pool_height, width and stride
+
+        Returns:
+        - pooled image
+    """
+
+    m, n_C_prev, H, W = x.shape
+    n_C = n_C_prev
+    HH = pool_param.get('pool_height', 2)
+    WW = pool_param.get('pool_width', 2)
+    stride = pool_param.get('stride', 2)
+    n_H = int((H-HH)/ stride) + 1
+    n_W = int((W - WW)/ stride) + 1
+
+    ## no padding
+    X_col = im2col(x, HH, WW, stride, 0)
+    X_col = X_col.reshape(n_C, X_col.shape[0]//n_C, -1)
+    max_indexes = np.argmax(X_col, axis=0)
+    out = np.max(X_col, axis=1)
+    # Reshape out properly.
+    out = np.array(np.hsplit(out, m))
+    out = out.reshape(m, n_C, n_H, n_W)
+
+    cache = (x, X_col, pool_param)
+    return out, cache
+
+def max_pool_backward_naive(dout, cache):
+    """backward pass for a max-pooling layer.
+    """
+    x, pool_param = cache
+    N, C, H, W = x.shape
+    HH = pool_param.get('pool_height', 2)
+    WW = pool_param.get('pool_width', 2)
+    stride = pool_param.get('stride', 2)
+
+    Hout = (H - HH) // stride + 1
+    Wout = (W - WW) // stride + 1
+
+    dx = np.zeros_like(x)
+
+    for n in range(N): # for each neuron
+        for c in range(C): # for each channel
+            for i in range(Hout): # for each y activation
+                for j in range(Wout): # for each x activation
+                    # pass gradient only through indices of max pool
+                    ind = np.argmax(x[n, c, i*stride:i*stride+HH, j*stride:j*stride+WW])
+                    ind1, ind2 = np.unravel_index(ind, (HH, WW))
+                    dx[n, c, i*stride:i*stride+HH, j*stride:j*stride+WW][ind1, ind2] = dout[n, c, i, j]
+    return dx
