@@ -301,7 +301,6 @@ def max_pool_backward(dout, cache):
     """
     
     method, real_cache = cache
-    print(method)
     if method == "reshape":
         return max_pool_backward_reshape(dout, real_cache)
 
