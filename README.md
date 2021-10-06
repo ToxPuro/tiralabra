@@ -1,6 +1,6 @@
 # tiralabra
 
-Run the program with pytho src/main.py
+Run the program with python src/main.py
 
 Test the program with: pytest
 
