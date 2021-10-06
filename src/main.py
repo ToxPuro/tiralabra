@@ -13,7 +13,7 @@ def main():
     x_train = x_train.reshape(60000,1,28,28).astype("float64")
     x_test = x_test.reshape(10000,1,28,28).astype("float64")
 
-    num_train = 1
+    num_train = 500
 
     data = {
         "X_train": x_train[:num_train],
@@ -38,18 +38,18 @@ def main():
     )
     solver.train()
 
-    # plt.subplot(2, 1, 1)
-    # plt.plot(solver.loss_history, 'o')
-    # plt.xlabel('iteration')
-    # plt.ylabel('loss')
+    plt.subplot(2, 1, 1)
+    plt.plot(solver.loss_history, 'o')
+    plt.xlabel('iteration')
+    plt.ylabel('loss')
 
-    # plt.subplot(2, 1, 2)
-    # plt.plot(solver.train_acc_history, '-o')
-    # plt.plot(solver.val_acc_history, '-o')
-    # plt.legend(['train', 'val'], loc='upper left')
-    # plt.xlabel('epoch')
-    # plt.ylabel('accuracy')
-    # plt.show()
+    plt.subplot(2, 1, 2)
+    plt.plot(solver.train_acc_history, '-o')
+    plt.plot(solver.val_acc_history, '-o')
+    plt.legend(['train', 'val'], loc='upper left')
+    plt.xlabel('epoch')
+    plt.ylabel('accuracy')
+    plt.show()
 
     print(
     "training accuracy:",
