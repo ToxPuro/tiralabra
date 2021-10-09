@@ -6,8 +6,20 @@ This is achieved in two main ways. First so called forward pass is tested agains
 
 Secondly so called backward pass is tested with gradient checking. Since they should calculate gradients it is possible to simulate the derivatives with small differences in the inputs and see how they change.
 
-Testing is done with numpy array inputs that they should get in runtime-
+Neural net is tested with gradient checking and also checking that it can overfit a small amount of data.
+
+Testing is done with numpy array inputs that they should get in runtime.
 
 All tests can be run by entering to the root folder on typing "pytest".
 
-After I have done the neural net will put some slides here.
+500_train.png includes training plot with training size of 500 and validation of 10000. Number of epochs was 15
+It took 103 seconds to train, training accuracy of 100% and validation accuracy of 89.8%
+
+50000_train.png includes training plot with training size of 50000 and validation of 10000. Number of epochs was 15
+It took 50 minutes to train, training accuracy 99.4% and validation accuracy of 98.4%
+
+I noticed that after the first epoch it started to overfit so the best accuracy is with 50000 and epoch of 1.
+
+
+
+Batch size was 50 for both of them

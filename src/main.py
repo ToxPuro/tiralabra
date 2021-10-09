@@ -3,6 +3,7 @@ from cnn import ThreeLayerConvNet
 from solver import Solver
 from keras.datasets import mnist
 import matplotlib.pyplot as plt
+import time
 
 
 
@@ -13,7 +14,7 @@ def main():
     x_train = x_train.reshape(60000,1,28,28).astype("float64")
     x_test = x_test.reshape(10000,1,28,28).astype("float64")
 
-    num_train = 500
+    num_train = 50000
 
     data = {
         "X_train": x_train[:num_train],
@@ -36,7 +37,9 @@ def main():
         verbose=True,
         print_every=1
     )
+    start_time = time.time()
     solver.train()
+    print("--- %s seconds ---" % (time.time() - start_time))
 
     plt.subplot(2, 1, 1)
     plt.plot(solver.loss_history, 'o')
