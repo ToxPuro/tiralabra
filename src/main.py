@@ -3,6 +3,7 @@ from cnn import ThreeLayerConvNet
 from solver import Solver
 from keras.datasets import mnist
 import matplotlib.pyplot as plt
+import sys
 import time
 
 
@@ -13,8 +14,7 @@ def main():
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
     x_train = x_train.reshape(60000,1,28,28).astype("float64")
     x_test = x_test.reshape(10000,1,28,28).astype("float64")
-
-    num_train = 50000
+    num_train = int(sys.argv[1])
 
     data = {
         "X_train": x_train[:num_train],
@@ -30,10 +30,10 @@ def main():
     solver = Solver(
         model,
         data,
-        num_epochs=15,
-        batch_size=50,
-        update_rule='adam',
-        optim_config={'learning_rate': 1e-3,},
+        num_epochs=int(sys.argv[2]),
+        batch_size=int(sys.argv[3]),
+        update_rule=sys.argv[4],
+        optim_config={'learning_rate': float(sys.argv[5]),},
         verbose=True,
         print_every=1
     )
