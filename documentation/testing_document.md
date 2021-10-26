@@ -18,8 +18,6 @@ It took 103 seconds to train, training accuracy of 100% and validation accuracy 
 50000_train.png includes training plot with training size of 50000 and validation of 10000. Number of epochs was 15
 It took 50 minutes to train, training accuracy 99.4% and validation accuracy of 98.4%
 
-I noticed that after the first epoch it started to overfit so the best accuracy is with 50000 and epoch of 1.
-
 
 
 Batch size was 50 for both of them
